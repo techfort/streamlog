@@ -1,16 +1,34 @@
+let EventType = require('./eventType');
+
 function Collection(name, client) {
-  let name = name,
-    client = client,
-    log = [],
+  let log = [],
+    data = [],
     snapshots = [],
     sorted = {},
     unique = {},
     exact = {},
-    views = {};
+    views = {},
+    listeners = {
+      ['' + EventType.INSERT]: []
+    };
 
   return {
+    id: name,
+    client: client,
+    emit: function (eventName, arg) {
+      listeners[eventName].forEach((listener) => {
+        listener(arg);
+      });
+    },
     insert: function (record) {
-      genInsertEvent(name, client, data);
+      let event = genInsertEvent(name, client, data);
+      log.push(event);
+      data.push(record);
+      this.emit(EventType.INSERT, event);
+    },
+    on: function (eventName, callback) {
+      console.log(eventName, listeners, listeners[eventName]);
+      listeners[eventName].push(callback);
     }
   };
 
@@ -44,4 +62,5 @@ function genDeleteEvent(channel, client, data) {
 function genRejectEvent(channel, client, data) {
   return generateEvent(EventType.REJECT, channel, client, data);
 }
+
 module.exports = Collection;

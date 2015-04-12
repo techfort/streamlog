@@ -1,55 +1,35 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-"use strict";
-
-module.exports = {
-  INSERT: 4919,
-  UPDATE: 4920,
-  DELETE: 4921,
-  READ: 4160,
-  REJECT: 4161
-};
-
-},{}],2:[function(require,module,exports){
 'use strict';
 
-var UniqueIndex = require('./unique'),
-    EventType = require('./eventType');
-
-function Collection() {}
-
-Collection.prototype = {
-  log: [],
-  data: [],
-  sorted: {},
-  unique: {},
-  exact: {},
-  views: {},
-  maintain: function maintain(record) {},
-  processEvent: function processEvent(event) {},
-  insert: function insert(record) {
-    this.data.push(record);
-    this.maintain(record);
-  },
-  update: function update(record) {},
-  get: function get(recordId) {},
-  by: function by(field, value) {}
-};
-
-function add(log, event) {
-  if (!event) {
-    return function (e) {
-      log.push(e);
-    };
-  }
-  log.push(event);
-}
-
-function StreamLog() {
+function Collection(name, client) {
   var log = [],
-      collections = {};
-  this.add = add(log);
-  this.register = function (coll) {
-    collections[coll.name] = coll;
+      data = [],
+      snapshots = [],
+      sorted = {},
+      unique = {},
+      exact = {},
+      views = {},
+      listeners = {
+    insert: []
+  };
+
+  return {
+    id: name,
+    client: client,
+    emit: function emit(eventName, arg) {
+      listeners[eventName].forEach(function (listener) {
+        listener(arg);
+      });
+    },
+    insert: function insert(record) {
+      var event = genInsertEvent(name, client, data);
+      log.push(event);
+      data.push(record);
+      this.emit(EventType.INSERT, event);
+    },
+    on: function on(eventName, callback) {
+      listeners[eventName].push(callback);
+    }
   };
 }
 
@@ -81,13 +61,85 @@ function genDeleteEvent(channel, client, data) {
 function genRejectEvent(channel, client, data) {
   return generateEvent(EventType.REJECT, channel, client, data);
 }
+module.exports = Collection;
 
-// maintain indexes here
+},{}],2:[function(require,module,exports){
+'use strict';
 
-// do something with the event
-// then process the indexes with process()
+module.exports = {
+  INSERT: 'INSERT',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+  READ: 'READ',
+  REJECT: 'REJECT'
+};
 
-},{"./eventType":1,"./unique":3}],3:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
+'use strict';
+
+var UniqueIndex = require('./unique'),
+    EventType = require('./eventType'),
+    Collection = require('./collection');
+
+function StreamLog(name) {
+  var log = [],
+      collections = {};
+
+  return {
+    id: name,
+    add: add(log),
+    register: register(collections),
+    deregister: deregister(collections),
+    Collection: Collection
+  };
+}
+
+function Broker() {
+  var connections = {};
+  return {
+    connect: function connect(log, collection) {
+      connections[collection.id + '@' + log.id] = {
+        log: log, collection: collection
+      };
+      collection.on('insert', function (record) {
+        return log.add(record);
+      });
+    }
+  };
+}
+
+function add(log, event) {
+  if (!event) {
+    return function (e) {
+      log.push(e);
+    };
+  }
+  log.push(event);
+}
+
+function register(collections, coll) {
+  if (!coll) {
+    return function (coll) {
+      collections[coll.name] = coll;
+    };
+  }
+  collections[coll.name] = coll;
+}
+
+function deregister(collections, coll) {
+  if (!coll) {
+    return function (coll) {
+      collections[coll.name] = undefined;
+    };
+  }
+  collections[coll.name] = undefined;
+}
+
+module.exports = {
+  StreamLog: StreamLog, Broker: Broker
+};
+
+},{"./collection":1,"./eventType":2,"./unique":4}],4:[function(require,module,exports){
 'use strict';
 
 function UniqueIndex(uniqueField) {
@@ -134,4 +186,4 @@ UniqueIndex.prototype = {
 
 module.exports = UniqueIndex;
 
-},{}]},{},[2]);
+},{}]},{},[3]);

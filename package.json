@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run test",
-    "build": "browserify index.js -t babelify --outfile streamlog.js && uglifyjs streamlog.js > dist/streamlog.min.js"
+    "build": "browserify index.js -t babelify --outfile streamlog.js && uglifyjs streamlog.js > dist/streamlog.min.js",
+    "demo": "browserify demo.js -t babelify --outfile demo.es5.js && node demo.es5.js"
   },
   "repository": {
     "type": "git",
