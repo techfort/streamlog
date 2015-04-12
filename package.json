@@ -4,7 +4,8 @@
   "description": "a stream of immutable events that works as a log",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test"
+    "test": "npm run test",
+    "build": "browserify index.js -t babelify --outfile streamlog.js && uglifyjs streamlog.js > dist/streamlog.min.js"
   },
   "repository": {
     "type": "git",
@@ -21,5 +22,12 @@
   "bugs": {
     "url": "https://github.com/techfort/streamlog/issues"
   },
-  "homepage": "https://github.com/techfort/streamlog"
+  "homepage": "https://github.com/techfort/streamlog",
+  "devDependencies": {
+    "babel": "^5.0.12",
+    "babelify": "^6.0.2",
+    "browserify": "^9.0.8",
+    "jasmine": "^2.2.1",
+    "uglifyjs": "^2.4.10"
+  }
 }

@@ -1,3 +1,19 @@
+let UniqueIndex = require('./unique'),
+  EventType = require('./eventType'),
+  Collection = require('./collection');
+
+function StreamLog() {
+  let log = [],
+    collections = {};
+
+  return {
+    add: add(log),
+    register: register(collections),
+    deregister: deregister(collections),
+    Collection: Collection
+  };
+}
+
 function add(log, event) {
   if (!event) {
     return function (e) {
@@ -7,39 +23,24 @@ function add(log, event) {
   log.push(event);
 }
 
-function Collection() {}
-
-Collection.prototype = {
-  data: [],
-  sorted: {},
-  unique: {},
-  exact: {},
-  views: {},
-  maintain: function (record) {
-    // maintain indexes here
-  },
-  processEvent: function (event) {
-    // do something with the event
-    // then process the indexes with process()
-  },
-  insert: function (record) {
-    this.data.push(record);
-    this.maintain(record);
-  },
-  update: function (record) {
-
-  },
-  get: function (recordId) {
-
+function register(collections, coll) {
+  if (!coll) {
+    return function (coll) {
+      collections[coll.name] = coll;
+    }
   }
+  collections[coll.name] = coll;
+}
+
+function deregister(collections, coll) {
+  if (!coll) {
+    return function (coll) {
+      collections[coll.name] = undefined;
+    }
+  }
+  collections[coll.name] = undefined;
 }
 
 
-function StreamLog() {
-  var log = [],
-    collections = {};
-  this.add = add(log);
-  this.register = function (coll) {
-    collections[coll.name] = coll;
-  };
-}
+
+module.exports = StreamLog;
