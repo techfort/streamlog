@@ -1,11 +1,14 @@
-let EventType = require('./eventType');
+let EventType = require('./eventType'),
+  UniqueIndex = require('./unique');
 
 function Collection(name, client) {
   let log = [],
     data = [],
     snapshots = [],
     sorted = {},
-    unique = {},
+    unique = {
+      id: UniqueIndex('id')
+    },
     exact = {},
     views = {},
     listeners = {
@@ -22,9 +25,15 @@ function Collection(name, client) {
     },
     insert: function (record) {
       let event = genInsertEvent(name, client, data);
+      record.id = event.id;
       log.push(event);
       data.push(record);
+      unique.id.set(record);
       this.emit(EventType.INSERT, event);
+    },
+    get: (value, field) => {
+      let f = field || 'id';
+      return unique[f].get(value);
     },
     on: function (eventName, callback) {
       console.log(eventName, listeners, listeners[eventName]);
@@ -36,6 +45,7 @@ function Collection(name, client) {
 
 function generateEvent(type, channel, client, data) {
   return Object.freeze({
+    id: `${channel}:${new Date().getTime()}~${client}`,
     type: type,
     channel: channel,
     client: client,

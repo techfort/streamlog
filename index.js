@@ -1,6 +1,7 @@
 let UniqueIndex = require('./unique'),
   EventType = require('./eventType'),
-  Collection = require('./collection');
+  Collection = require('./collection'),
+  Broker = require('./broker');
 
 function StreamLog(name) {
   let log = [],
@@ -13,23 +14,7 @@ function StreamLog(name) {
       return log
     },
     register: register(collections),
-    deregister: deregister(collections),
-    Collection: Collection
-  };
-}
-
-function Broker() {
-  let connections = {};
-  return {
-    connect: function (log, collection) {
-      connections[collection.id + '@' + log.id] = {
-        log, collection
-      };
-      collection.on(EventType.INSERT, (record) => {
-        log.add(record);
-        console.log('Added record', record);
-      });
-    }
+    deregister: deregister(collections)
   };
 }
 
@@ -64,5 +49,5 @@ function deregister(collections, coll) {
 
 
 module.exports = {
-  StreamLog, Broker
+  StreamLog, Broker, Collection
 };

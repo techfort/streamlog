@@ -1,8 +1,9 @@
-let lib = require('./index');
-console.log(lib);
-let broker = lib.Broker(),
-  streamlog = lib.StreamLog('TestLog'),
-  users = streamlog.Collection('users', 'joe');
+let {
+  StreamLog, Broker, Collection
+} = require('./index');
+let broker = Broker(),
+  streamlog = StreamLog('TestLog'),
+  users = Collection('users', 'joe');
 
 let user = {
   username: 'joe',
